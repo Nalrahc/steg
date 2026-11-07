@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="steg:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/steg_jar</output-path>
+    <root id="archive" name="steg.jar">
+      <element id="module-output" name="steg" />
+    </root>
+  </artifact>
+</component>
