@@ -297,3 +297,10 @@ Ce projet est avant tout un exercice pédagogique autour de :
 - l'organisation d'un projet Java sans framework
 
 Aucune dépendance externe n'est nécessaire.
+
+## Packaging
+
+Dans un repertoire qui contient une image encodée et steg.jar :
+````bash
+jpackage --type app-image --name MyApp --input . --main-jar steg.jar --arguments "run app/Encoded.png"
+````

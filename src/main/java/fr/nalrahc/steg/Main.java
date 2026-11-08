@@ -72,7 +72,7 @@ public final class Main {
                 Usage:
                 
                   encode:
-                  steg encode payload.class cover.png hidden.png
+                  steg encode payload cover.png hidden.png
                 
                   decode:
                   steg decode hidden.png
