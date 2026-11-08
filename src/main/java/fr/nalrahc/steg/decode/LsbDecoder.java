@@ -20,7 +20,6 @@ public final class LsbDecoder {
 
     public static DecodedData decodeData(String imagePath) throws Exception {
         BufferedImage image = ImageIO.read(new File(imagePath));
-
         BitWriter bits = new BitWriter();
 
         for (int y = 0; y < image.getHeight(); y++) {
@@ -38,7 +37,6 @@ public final class LsbDecoder {
         }
 
         byte[] raw = bits.toByteArray();
-
         verifyMagic(raw);
 
         int offset = 4;
@@ -80,7 +78,6 @@ public final class LsbDecoder {
         }
 
         byte[] payload = new byte[payloadSize];
-
         System.arraycopy(raw, offset, payload, 0, payloadSize);
 
         return new DecodedData(version, type, filename, payloadSize, payload);

@@ -34,17 +34,12 @@ public final class LsbEncoder {
         byte[] content = new byte[header.length + payload.length];
 
         System.arraycopy(header, 0, content, 0, header.length);
-
         System.arraycopy(payload, 0, content, header.length, payload.length);
 
         BufferedImage source = ImageIO.read(new File(coverImagePath));
-
         BufferedImage image = new BufferedImage(source.getWidth(), source.getHeight(), BufferedImage.TYPE_INT_ARGB);
-
         Graphics2D graphics = image.createGraphics();
-
         graphics.drawImage(source, 0, 0, null);
-
         graphics.dispose();
 
         long capacity = ((long) image.getWidth() * image.getHeight() * 3) / 8;

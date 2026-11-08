@@ -11,12 +11,9 @@ public final class BitWriter {
 
     public void writeBit(int bit) {
         currentByte = (currentByte << 1) | bit;
-
         bitCount++;
-
         if (bitCount == 8) {
             out.write(currentByte);
-
             currentByte = 0;
             bitCount = 0;
         }

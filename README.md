@@ -1,33 +1,24 @@
 # Steg
 
-Utilitaire CLI de stéganographie écrit en Java permettant de cacher des fichiers binaires dans une image PNG à l'aide de la technique des bits de poids faible (LSB - Least Significant Bit).
+Steg(anography) is a free Java CLI tool for hiding data inside PNG files using the Least Significant Bit (LSB) method.
 
-Le projet a été développé dans un but pédagogique afin d'explorer :
+## Features
 
-- la manipulation binaire en Java ;
-- le fonctionnement des fichiers `.class` ;
-- la stéganographie LSB ;
-- les flux d'entrée/sortie ;
-- la conception d'outils en ligne de commande de type Unix.
-
-## Fonctionnalités
-
-- Injection d'un fichier dans une image PNG
-- Extraction d'un fichier caché
-- Support de différents types de payloads
+- Data encoding into PNG files
+- Data decoding from encoded PNG files
+- Direct execution of embedded PNG payloads (absolutely unsafe)
+- Multiple payload types:
     - CLASS
     - JAR
     - BINARY
-- En-tête versionné
-- Signature magique `STEG`
-- Restauration automatique du nom du fichier lors du décodage
-- Vérification de la validité du conteneur avant extraction
+- Versioned header format
+- Magic signature `STEG`
+- Original filename restoration during decoding
+- Header validation before payload extraction
 
 ---
 
-## Format du conteneur
-
-Les données cachées dans l'image suivent le format suivant :
+## Data Format
 
 ```text
 +---------------------+
@@ -41,51 +32,23 @@ Les données cachées dans l'image suivent le format suivant :
 +---------------------+
 | NAME    (n bytes)   |
 +---------------------+
-| SIZE    (4 bytes)   |
+| P_SIZE  (4 bytes)   |
 +---------------------+
-| PAYLOAD             |
+| PAYLOAD (n bytes)   |
 +---------------------+
 ```
-
-### Signature
-
-```text
-53 54 45 47
-```
-
-soit :
-
-```text
-STEG
-```
-
-### Version
-
-Version actuelle :
-
-```text
-1
-```
-
-### Types supportés
-
-| Valeur | Type |
-|---------|---------|
-| 1 | CLASS |
-| 2 | JAR |
-| 3 | BINARY |
 
 ---
 
-## Principe de la stéganographie
+## Principle
 
-Chaque pixel RGB contient 3 composantes :
+Each pixel in a PNG image is composed of four channels:
 
 ```text
-R G B
+R G B A
 ```
 
-Le projet remplace uniquement le bit de poids faible de chaque composante :
+The project uses the least significant bit of each RGB component:
 
 ```text
 RRRRRRRx
@@ -93,49 +56,25 @@ GGGGGGGx
 BBBBBBBx
 ```
 
-On obtient ainsi :
-
-```text
-3 bits stockés par pixel
-```
-
-La modification est généralement invisible à l'œil nu.
+This provides 3 bits of storage per pixel while producing changes that are usually imperceptible to the human eye.
 
 ---
 
-## Capacité maximale
+## Maximum Payload Capacity
 
-Capacité théorique :
+In theory, the maximum payload size an image can store, in bytes, is:
 
 ```text
 (width × height × 3) / 8
 ```
 
-Exemple :
-
-```text
-1920 × 1080
-```
-
-```text
-(1920 × 1080 × 3) / 8
-=
-777 600 octets
-```
-
-Soit environ :
-
-```text
-760 Ko
-```
-
-de données cachées.
+For example, a 1920×1080 PNG image can hide up to 777 600 bytes.
 
 ---
 
 ## Compilation
 
-Depuis la racine du projet :
+From the project root:
 
 ```bash
 mkdir -p target/classes
@@ -143,7 +82,7 @@ mkdir -p target/classes
 javac -d target/classes $(find src/main/java -name "*.java")
 ```
 
-Création du JAR :
+Then build the executable JAR:
 
 ```bash
 jar -cfe steg.jar fr.nalrahc.steg.Main -C target/classes .
@@ -151,156 +90,69 @@ jar -cfe steg.jar fr.nalrahc.steg.Main -C target/classes .
 
 ---
 
-## Utilisation
+## Usage
 
-### Encodage
+### Encoding
 
-Cacher un fichier dans une image :
+Hide a text file inside `Boston.png` and produce `Boston_with_LICENSE.png`:
 
 ```bash
-java -jar steg.jar encode HelloWorld.class Boston.png Hidden.png
+java -jar steg.jar encode LICENSE Boston.png Boston_with_LICENSE.png
 ```
 
-Exemple avec un JAR :
+Hide a Java class inside `Boston.png` and produce `Encoded_Boston.png`:
 
 ```bash
-java -jar steg.jar encode application.jar Boston.png Hidden.png
+java -jar steg.jar encode MyPayload.class Boston.png Encoded_Boston.png
 ```
 
 ---
 
-### Décodage
+### Decoding
 
-Extraction :
+Extract the embedded payload from an encoded PNG:
 
 ```bash
-java -jar steg.jar decode Hidden.png
+java -jar steg.jar decode Boston_with_LICENSE.png
 ```
 
-Exemple de sortie :
-
-```text
-Version : 1
-Type    : CLASS
-Fichier : HelloWorld.class
-Taille  : 430
-
-Extraction terminée
-```
-
-Le fichier extrait est automatiquement recréé avec son nom d'origine.
+The payload will be restored using its original filename stored in the header.
 
 ---
 
-## Exemple complet
+### Running
 
-Création d'une classe :
+> Warning: executing unknown code hidden inside a PNG file is generally a very bad idea.
 
-```java
-public class HelloWorld {
-
-    public static void main(String[] args) {
-        System.out.println("Hello World");
-    }
-}
-```
-
-Compilation :
+This is roughly equivalent to:
 
 ```bash
-javac HelloWorld.java
+curl www.random.org | sh
 ```
 
-Encodage :
+If you still want to do it:
 
 ```bash
-java -jar steg.jar encode HelloWorld.class Boston.png Hidden.png
+java -jar steg.jar run Boston_with_LICENSE.png
 ```
 
-Décodage :
+Depending on the payload type:
 
-```bash
-java -jar steg.jar decode Hidden.png
-```
-
-Exécution :
-
-```bash
-java HelloWorld
-```
-
-Résultat :
-
-```text
-Hello World
-```
+- `BINARY`: its contents are printed to standard output.
+- `CLASS`: its `main()` method is executed.
+- `JAR`: it is extracted into a temporary directory and executed.
 
 ---
-
-## Structure du projet
-
-```text
-src/
-├── main/
-│   └── java/
-│       └── fr/
-│           └── nalrahc/
-│               └── steg/
-│                   ├── Main.java
-│                   ├── BitReader.java
-│                   ├── BitWriter.java
-│                   ├── LsbEncoder.java
-│                   ├── LsbDecoder.java
-│                   ├── PayloadType.java
-│                   └── StegHeader.java
-│
-└── test/
-    └── java/
-```
-
----
-
-## Limites actuelles
-
-- Un seul fichier par image
-- Pas de compression des données
-- Pas de chiffrement
-- Pas de contrôle d'intégrité (CRC ou SHA)
-- PNG uniquement
-
----
-
-## Évolutions possibles
-
-- Ajout d'un CRC32
-- Vérification SHA-256
-- Compression GZIP
-- Chiffrement AES
-- Support de plusieurs fichiers
-- Commande `info`
-- Commande `verify`
-- Support du canal alpha
-- Support d'autres formats d'images
-
----
-
-## Objectif du projet
-
-Ce projet est avant tout un exercice pédagogique autour de :
-
-- Java
-- les formats binaires
-- la manipulation des bits
-- les images PNG
-- la stéganographie
-- la conception de petits utilitaires CLI
-- l'organisation d'un projet Java sans framework
-
-Aucune dépendance externe n'est nécessaire.
 
 ## Packaging
 
-Dans un repertoire qui contient une image encodée et steg.jar :
-````bash
-jpackage --type app-image --name MyApp --input . --main-jar steg.jar --arguments "run app/Encoded.png"
-````
+If you want to distribute an application composed of an encoded PNG file and `steg.jar`, you can use:
+
+```bash
+jpackage \
+  --type app-image \
+  --name MyApp \
+  --input . \
+  --main-jar steg.jar \
+  --arguments "run app/Encoded.png"
+```
